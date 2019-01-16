@@ -93,14 +93,7 @@ app.get('/recipes', (req, res) => {
 app.post('/recipes', jsonParser, (req, res) => {
   // ensure `name` and `budget` are in request body
   const requiredFields = ['name', 'ingredients'];
-  for (let i=0; i<requiredFields.length; i++) {
-    const field = requiredFields[i];
-    if (!(field in req.body)) {
-      const message = `Missing \`${field}\` in request body`
-      console.error(message);
-      return res.status(400).send(message);
-    }
-  }
+  validate(requiredFields, req, res);
   const item = Recipes.create(req.body.name, req.body.ingredients);
   res.status(201).json(item);
 });
@@ -108,6 +101,34 @@ app.post('/recipes', jsonParser, (req, res) => {
 app.delete('/recipes/:id', (req, res) => {
   Recipes.delete(req.params.id);
   console.log(`Deleted recipe \`${req.params.ID}\``);
+  res.status(204).end();
+});
+
+function validate(requiredFields, req, res) {
+  for (i=0; i < requiredFields.length; i++) {
+    const field = requiredFields[i];
+    if (!(field in req.body)) {
+      const message = `Missing \`${field}\` in request body`;
+      console.error(message);
+      return res.status(400).send(message);
+    }
+  }
+}
+
+app.put('/recipes/:id', jsonParser, (req, res) => {
+  const requiredFields = ['name', 'id', 'ingredients'];
+  validate(requiredFields, req, res);
+  if (req.params.id !== req.body.id) {
+    const message = `Request path id (${req.params.id}) and request body id (${req.body.id}) must match`;
+    console.error(message);
+    return res.status(400).send(message);
+  }
+  console.log(`Updated recipe item \`${req.params.id}\``);
+  Recipes.update({
+    name: req.body.name,
+    id: req.params.id,
+    ingredients: req.body.ingredients
+  });
   res.status(204).end();
 });
 
